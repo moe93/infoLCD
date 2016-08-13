@@ -7,7 +7,7 @@
  *   - Mohammad Odeh
  *  
  *  VERSION:
- *   - 0.3
+ *   - 0.4
  * ****************************************************************
  *  
  * LCD SETUP:
@@ -68,7 +68,7 @@ void setup() {
 
   // Print greeting message
   lcd.print("Hello, Moe.");
-  delay(1500);
+  delay2s();
   lcd.clear();
 }
 
@@ -77,7 +77,7 @@ void loop() {
   lcd.print("Going to sleep..");
   lcd.setCursor(0, 1);
   lcd.print("Display OFF");
-  delay(1500);
+  delay2s();
   // Turn OFF display
   lcd.noDisplay();
   lcd.clear();
@@ -96,8 +96,12 @@ void loop() {
   detachInterrupt(digitalPinToInterrupt(3));
 }
 
-void displayON() {
+/* *************************************************************************** *
+ * --------------------------- Auxiliary Functions --------------------------- *
+ * *************************************************************************** *
+ */
 
+void displayON() {
   // Do readings first as this sensor is cheap and slow
   // Read humidity level
   float h = dht.readHumidity();
@@ -127,24 +131,28 @@ void displayON() {
   lcd.print("C");
   delay(750);
 
-  // 5th column, 1st row
-  lcd.setCursor(6, 0);
+  // 1st column, 2nd row
+  lcd.setCursor(0, 1);
   lcd.print(f, 1);
   lcd.print("F");
   delay(750);
 
-  // 1st column, 2nd row
-  lcd.setCursor(0, 1);
-  lcd.print(h, 1);
-  lcd.print("Hmd");
+  // 5th column, 1st row
+  lcd.setCursor(6, 0);
+  lcd.print(hic, 1);
+  lcd.print("HtIndx");
   delay(750);
 
-  // 11th column, 2nd row
-  lcd.setCursor(8, 1);
-  lcd.print(hic, 1);
-  lcd.print("HI");
+  // 5th column, 2nd row
+  lcd.setCursor(6, 1);
+  lcd.print(h, 1);
+  lcd.print("Hmdty");
 
   // Delay for stability
   delay(2500);
   lcd.clear();
+}
+
+void delay2s(){
+  LowPower.powerDown(SLEEP_2S, ADC_OFF, BOD_OFF);
 }
