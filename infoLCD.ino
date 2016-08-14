@@ -7,7 +7,7 @@
  *   - Mohammad Odeh
  *  
  *  VERSION:
- *   - 0.4
+ *   - 0.5 [STABLE]
  * ****************************************************************
  *  
  * LCD SETUP:
@@ -21,7 +21,7 @@
  *  D5  -> PIN 10
  *  D6  -> PIN 11
  *  D7  -> PIN 12
- *  A   -> 220ohm -> PIN 4
+ *  A   -> 220ohm -> PIN 5
  *  K   -> GND
  * 
  * WAKE UP PUSHBUTTON SETUP:
@@ -48,7 +48,7 @@
 #define DHTTYPE DHT22
 // Define pushbutton pin + display on/off
 #define button 3
-#define displaySwitch 4
+#define displaySwitch 5
 
 // LiquidCrystal name(rs, enable, d4, d5, d6, d7)
 LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
@@ -68,38 +68,49 @@ void setup() {
 
   // Print greeting message
   lcd.print("Hello, Moe.");
-  delay2s();
+  delayS(2);
   lcd.clear();
 }
 
 void loop() {
-  // Display message
-  lcd.print("Going to sleep..");
-  lcd.setCursor(0, 1);
-  lcd.print("Display OFF");
-  delay2s();
-  // Turn OFF display
-  lcd.noDisplay();
-  lcd.clear();
-  digitalWrite(displaySwitch, LOW);
+  displayOFF();
   // Create an interrupt service routine (ISR)
   /* Here the interrupt cue is attached to the pin we specify; we tell the atmega to
   // watch for the specified change to occur (changing the pin's state from whatever to LOW)
   // and when that happens call the function (displayON)
   attachInterrupt(digitalPinToInterrupt(2or3), functionToCall, stateChange); */
-  attachInterrupt(digitalPinToInterrupt(3), displayON, LOW);
+  attachInterrupt(digitalPinToInterrupt(3), wakeUp, LOW);
   // Add delay() for stability
   delay(50);
   // powerDown the atmega
   LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
-  // After interrupt is triggered and displayON is called the MC will continue code execution here
-  detachInterrupt(digitalPinToInterrupt(3));
+  // After interrupt is triggered and wakeUp() is called the MC will continue code execution here
+  displayON();
 }
 
 /* *************************************************************************** *
  * --------------------------- Auxiliary Functions --------------------------- *
  * *************************************************************************** *
  */
+void wakeUp(){
+  detachInterrupt(digitalPinToInterrupt(3));
+  return;
+}
+
+void displayOFF(){
+  // Display message
+  lcd.print("Going to sleep..");
+  lcd.setCursor(0, 1);
+  lcd.print("Display OFF");
+  delayS(2);
+  // Turn OFF display
+  lcd.noDisplay();
+  lcd.clear();
+  for (int i=255; i>=0; i--){
+    analogWrite(displaySwitch, i);
+    delayMicroseconds(1000);
+  } return;
+}
 
 void displayON() {
   // Do readings first as this sensor is cheap and slow
@@ -115,13 +126,16 @@ void displayON() {
   // Turn ON and display message
   lcd.print("Display ON");
   lcd.display();
-  digitalWrite(displaySwitch, HIGH);
-  delay(1500);
+  for (int i=0; i<=255; i++){
+    analogWrite(displaySwitch, i);
+    delayMicroseconds(1000);
+  }
+  delayS(1);
   lcd.clear();
 
   // Print greeting message
   lcd.print("Hello, Moe.");
-  delay(1500);
+  delayS(2);
   lcd.clear();
 
   //1st column, 1st row
@@ -129,30 +143,40 @@ void displayON() {
   // print float with 1 decimal precision
   lcd.print(c, 1);
   lcd.print("C");
-  delay(750);
+  delayS(1);
 
   // 1st column, 2nd row
   lcd.setCursor(0, 1);
   lcd.print(f, 1);
   lcd.print("F");
-  delay(750);
+  delayS(1);
 
   // 5th column, 1st row
   lcd.setCursor(6, 0);
   lcd.print(hic, 1);
   lcd.print("HtIndx");
-  delay(750);
+  delayS(1);
 
   // 5th column, 2nd row
   lcd.setCursor(6, 1);
   lcd.print(h, 1);
-  lcd.print("Hmdty");
+  lcd.print("Hmdity");
 
-  // Delay for stability
-  delay(2500);
+  // Delay so user has time to read values
+  delayS(4);
   lcd.clear();
+
+  return;
 }
 
-void delay2s(){
-  LowPower.powerDown(SLEEP_2S, ADC_OFF, BOD_OFF);
+void delayS(int x){
+  switch (x){
+    case 1: LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF); break;
+    case 2: LowPower.powerDown(SLEEP_2S, ADC_OFF, BOD_OFF); break;
+    case 4: LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF); break;
+    default:
+      x=x*1000;
+      delay(x);
+      break;
+  } return;
 }
